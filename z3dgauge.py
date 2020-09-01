@@ -18,7 +18,11 @@ width, height = 640, 640
 
 appWindow = 0
 
-
+gX = 1.1
+gY = 1.1
+gZ = 1.1
+gZback = 0.0
+gXleft = 0.0
 
 
 
@@ -50,7 +54,7 @@ def acMain(ac_version): #app window init; global variables for later updating go
     ac.setPosition(l_rpm, 3, 60)
     ac.setPosition(l_gear, 3, 80)
     ac.setPosition(ascii_RPM, 3, 160)
-    ac.setPosition(acceleration, 3, 180)
+    ac.setPosition(acceleration, 3, 580)
 
     ac.addRenderCallback(appWindow, appGL) # -> links this app's window to an OpenGL render function
 
@@ -58,20 +62,36 @@ def acMain(ac_version): #app window init; global variables for later updating go
 
 def appGL(deltaT):
     
+    global gX, gY, gZ, gXleft, gZback
+    
+    # drawing the gauge's background primitive aka a square
+    # initial values
+    x0 = 20.0   # point 1
+    y0 = 20.0
+    x1 = 20.0   # point 2
+    y1 = 500.0 #500
+    x2 = 500.0   # point 3
+    y2 = 500.0
+    x3 = 500.0 #500  point 4
+    y3 = 20.0  # so I'm gonna have to find a way to make these variables be affected by gforces
 
-    x0 = 50
-    y0 = 50
-    x1 = 50
-    y1 = 300
-    x2 = 200
-    y2 = 350
-    x3 = 250
-    y3 = 50  # so I'm gonna have to find a way to make these variables be affected by gforces
+    # calucated values with gforces into account
+    x00 = x0 + (abs(gZ)*100)    # forward
+    y00 = y0 + (abs(gXleft)*100)    #right
+    x11 = x1 + (abs(gZback)*100)    #reverse
+    y11 = y1 - (abs(gXleft)*100)    #right
+    x22 = x2 - (abs(gZback)*100)    #reverse
+    y22 = y2 - (abs(gX)*100)    #left
+    x33 = x3 - (abs(gZ)*100)    #forward
+    y33 = y3 + (abs(gX)*100)    #left
+
     ac.glBegin(acsys.GL.Quads)
-    ac.glVertex2f(5, 5) # top left in brainlet terms aka for dummies like me
-    ac.glVertex2f(5, 20)   # bottom left
-    ac.glVertex2f(20, 30) # bottom right
-    ac.glVertex2f(20, 5)   #top right
+    ac.glColor4f(50,0,0,0.5)
+
+    ac.glVertex2f(x00, y00) # top left in brainlet terms aka for dummies like me
+    ac.glVertex2f(x11, y11)   # bottom left
+    ac.glVertex2f(x22, y22) # bottom right
+    ac.glVertex2f(x33, y33)   #top right
     ac.glEnd()
 
     
@@ -102,7 +122,26 @@ def acUpdate(deltaT):
         ARPM = ARPM + "[!]"
     
     ac.setText(ascii_RPM, ARPM)
-    accelerationS = str(ac.getCarState(0, acsys.CS.AccG)) # returns a tuple with x y z; so X is sideways, Y and Z idk - to find out!
+    accelerationS = str(ac.getCarState(0, acsys.CS.AccG)) # returns a tuple with x y z; so X is sideways, Y is up and down and Z forward reverse
+    accelerationTest = ac.getCarState(0, acsys.CS.AccG) # this is the non-printing one I'm gonna work with
+
+    global gX, gY, gZ, gZback, gXleft
+
+    gX = round(accelerationTest[0], 3)  # then the car's turning left basically, gforces pulling the car to the right
+    if gX > 0:  
+        gXleft = 0
+    else:
+        gXleft = gX
+        gX = 0.0
+    gY = round(accelerationTest[1], 3)
+    gZ = round(accelerationTest[2], 3)
+    gZback = gZ # forking gZ into two, this one will be used for reverse gforces
+    if gZ < 0:
+        gZback = gZ
+        gZ = 0.0
+    else:
+        gZback = 0.0
+        
     ac.setText(acceleration, accelerationS)
     print(acceleration)
 
