@@ -1,6 +1,4 @@
-﻿#importing the thingies
-
-import ac, acsys
+﻿import ac, acsys
 
 
 import os
@@ -9,8 +7,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'DLLs'))
 
 from sim_info import info
 
-print(info.graphics.tyreCompound, info.physics.rpms, info.static.playerNick)
 
+#TODO: fix the usage of globals
+#TODO: fullscreen
+#TODO: render heading, pitch and roll
 
 
 appName = "z3Dgauge"
@@ -29,6 +29,9 @@ gXleft = 0.0
 
 def acMain(ac_version): #app window init; global variables for later updating go here
     global appWindow
+
+    
+    global width, height
     appWindow = ac.newApp(appName)
     ac.setTitle(appWindow, appName)
     ac.setSize(appWindow, width, height)
@@ -37,14 +40,24 @@ def acMain(ac_version): #app window init; global variables for later updating go
     ac.console("z3D Gauge console test")
 
     ####################################################declaring gauge elements
-    # gonna need new textures like
+    # will need new textures like
     # rpm_bar = ac.newTexture(app_path + theme_path + "rpm_bar.png")
 
-    global l_kmph, l_rpm, l_gear, acceleration
+    global l_kmph
+    global l_rpm
+    global l_gear
+    global l_heading
+    global l_pitch
+    global l_roll
+    global acceleration
     global ascii_RPM
     l_kmph = ac.addLabel(appWindow, "KMPH")
     l_rpm = ac.addLabel(appWindow, "RPM")
     l_gear = ac.addLabel(appWindow, "Current gear")
+    l_heading = ac.addLabel(appWindow, "Heading")
+    l_pitch = ac.addLabel(appWindow, "Pitch")
+    l_roll = ac.addLabel(appWindow, "Roll")
+
     ascii_RPM = ac.addLabel(appWindow, "")
     acceleration = ac.addLabel(appWindow, "")
     #l_TC = ac.addLabel(appWindow, "TC on/off")      #non-functional
@@ -75,15 +88,27 @@ def appGL(deltaT):
     x3 = 500.0 #500  point 4
     y3 = 20.0  # so I'm gonna have to find a way to make these variables be affected by gforces
 
-    # calucated values with gforces into account
-    x00 = x0 + (abs(gZ)*100)    # forward
-    y00 = y0 + (abs(gXleft)*100)    #right
-    x11 = x1 + (abs(gZback)*100)    #reverse
-    y11 = y1 - (abs(gXleft)*100)    #right
-    x22 = x2 - (abs(gZback)*100)    #reverse
-    y22 = y2 - (abs(gX)*100)    #left
-    x33 = x3 - (abs(gZ)*100)    #forward
-    y33 = y3 + (abs(gX)*100)    #left
+    # calculated values with gforces into account
+    #x00 = x0 + (abs(gZ)*100)    # forward
+    #y00 = y0 + (abs(gXleft)*100)    #right
+    #x11 = x1 + (abs(gZback)*100)    #reverse
+    #y11 = y1 - (abs(gXleft)*100)    #right
+    #x22 = x2 - (abs(gZback)*100)    #reverse
+    #y22 = y2 - (abs(gX)*100)    #left
+    #x33 = x3 - (abs(gZ)*100)    #forward
+    #y33 = y3 + (abs(gX)*100)    #left
+
+
+    # calculated values with gforces into account
+    x00 = x0 - (abs(gZ)*100)    # forward
+    y00 = y0 - (abs(gXleft)*100)    #right
+    x11 = x1 - (abs(gZback)*100)    #reverse
+    y11 = y1 + (abs(gXleft)*100)    #right
+    x22 = x2 + (abs(gZback)*100)    #reverse
+    y22 = y2 + (abs(gX)*100)    #left
+    x33 = x3 + (abs(gZ)*100)    #forward
+    y33 = y3 - (abs(gX)*100)    #left
+
 
     ac.glBegin(acsys.GL.Quads)
     ac.glColor4f(50,0,0,0.5)
@@ -100,15 +125,31 @@ def acUpdate(deltaT):
 
     ac.setBackgroundOpacity(appWindow, 0)
     ac.drawBorder(appWindow, 0)
-    global l_kmph, l_rpm, l_gear, speed, RPM, gear, acceleration
+    global l_kmph
+    global l_rpm
+    global l_gear
+    global l_heading
+    global speed
+    global RPM
+    global gear
+    global acceleration
 
+    # standard info
     speed = str(ac.getCarState(0, acsys.CS.SpeedKMH))
     RPM = str(ac.getCarState(0, acsys.CS.RPM))
     gear = str(ac.getCarState(0, acsys.CS.Gear))
 
+    # car-to-world info
+    heading = str(info.physics.heading)
+    pitch = str(info.physics.pitch)
+    roll = str(info.physics.roll)
+
     ac.setText(l_kmph, speed)
     ac.setText(l_rpm, RPM)
     ac.setText(l_gear, gear)
+    ac.setText(l_heading, heading)
+    ac.setText(l_pitch, pitch)
+    ac.setText(l_roll, roll)
     
 
     global ascii_RPM, ARPM
@@ -122,6 +163,7 @@ def acUpdate(deltaT):
         ARPM = ARPM + "[!]"
     
     ac.setText(ascii_RPM, ARPM)
+    
     accelerationS = str(ac.getCarState(0, acsys.CS.AccG)) # returns a tuple with x y z; so X is sideways, Y is up and down and Z forward reverse
     accelerationTest = ac.getCarState(0, acsys.CS.AccG) # this is the non-printing one I'm gonna work with
 
@@ -142,8 +184,8 @@ def acUpdate(deltaT):
     else:
         gZback = 0.0
         
-    ac.setText(acceleration, accelerationS)
-    print(acceleration)
+    #ac.setText(acceleration, accelerationS)
+    #print(acceleration)
 
 
 def tacho(anotherRPM):      #idk wtf is going on anymore; thanks to based serb for the function though
