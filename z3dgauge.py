@@ -3,6 +3,7 @@
 
 import os
 import sys
+import math
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'DLLs'))
 
 from sim_info import info
@@ -14,7 +15,8 @@ from sim_info import info
 
 
 appName = "z3Dgauge"
-width, height = 640, 640
+width, height = 1920, 1080
+
 
 appWindow = 0
 
@@ -35,6 +37,7 @@ def acMain(ac_version): #app window init; global variables for later updating go
     appWindow = ac.newApp(appName)
     ac.setTitle(appWindow, appName)
     ac.setSize(appWindow, width, height)
+    
 
     ac.log("z3D Gauge loaded")
     ac.console("z3D Gauge console test")
@@ -66,6 +69,9 @@ def acMain(ac_version): #app window init; global variables for later updating go
     ac.setPosition(l_kmph, 3, 30)
     ac.setPosition(l_rpm, 3, 60)
     ac.setPosition(l_gear, 3, 80)
+    ac.setPosition(l_heading, 3, 100)
+    ac.setPosition(l_pitch, 3, 120)
+    ac.setPosition(l_roll, 3, 140)
     ac.setPosition(ascii_RPM, 3, 160)
     ac.setPosition(acceleration, 3, 580)
 
@@ -75,6 +81,8 @@ def acMain(ac_version): #app window init; global variables for later updating go
 
 def appGL(deltaT):
     
+    
+    ## Main
     global gX, gY, gZ, gXleft, gZback
     
     # drawing the gauge's background primitive aka a square
@@ -89,17 +97,6 @@ def appGL(deltaT):
     y3 = 20.0  # so I'm gonna have to find a way to make these variables be affected by gforces
 
     # calculated values with gforces into account
-    #x00 = x0 + (abs(gZ)*100)    # forward
-    #y00 = y0 + (abs(gXleft)*100)    #right
-    #x11 = x1 + (abs(gZback)*100)    #reverse
-    #y11 = y1 - (abs(gXleft)*100)    #right
-    #x22 = x2 - (abs(gZback)*100)    #reverse
-    #y22 = y2 - (abs(gX)*100)    #left
-    #x33 = x3 - (abs(gZ)*100)    #forward
-    #y33 = y3 + (abs(gX)*100)    #left
-
-
-    # calculated values with gforces into account
     x00 = x0 - (abs(gZ)*100)    # forward
     y00 = y0 - (abs(gXleft)*100)    #right
     x11 = x1 - (abs(gZback)*100)    #reverse
@@ -110,13 +107,39 @@ def appGL(deltaT):
     y33 = y3 - (abs(gX)*100)    #left
 
 
+    ## Heading (Top center)
+    # 45 degree segments
+    #heading_x = 0 - 960 + (heading % 360 ) * 10
+    #TODO: proper conversions
+    heading_x = 0 - 1920 + heading * 10
+    heading_y = 0
+    for head_segment in range(32):
+        ac.glBegin(acsys.GL.Quads)
+        ac.glColor4f(0,50,0,0.9)
+        ac.glVertex2f(heading_x - 5 , heading_y) # top left
+        ac.glVertex2f(heading_x -5 , heading_y + 20)   # bottom left
+        ac.glVertex2f(heading_x + 5 , heading_y + 20) # bottom right
+        ac.glVertex2f(heading_x + 5 , heading_y)   #top right
+        heading_x = heading_x + 240
+        ac.glEnd()
+
+    ## Roll
+
+    ## Pitch (Right center)
+
+    ## Speed (Left center)
+
+    ## 3D combination of Heading, Roll, Pitch
+
+    
+
     ac.glBegin(acsys.GL.Quads)
     ac.glColor4f(50,0,0,0.5)
 
-    ac.glVertex2f(x00, y00) # top left in brainlet terms aka for dummies like me
-    ac.glVertex2f(x11, y11)   # bottom left
+    ac.glVertex2f(x00, y00) # top left
+    ac.glVertex2f(x11, y11) # bottom left
     ac.glVertex2f(x22, y22) # bottom right
-    ac.glVertex2f(x33, y33)   #top right
+    ac.glVertex2f(x33, y33) # top right
     ac.glEnd()
 
     
@@ -133,6 +156,7 @@ def acUpdate(deltaT):
     global RPM
     global gear
     global acceleration
+    global heading
 
     # standard info
     speed = str(ac.getCarState(0, acsys.CS.SpeedKMH))
@@ -140,14 +164,14 @@ def acUpdate(deltaT):
     gear = str(ac.getCarState(0, acsys.CS.Gear))
 
     # car-to-world info
-    heading = str(info.physics.heading)
-    pitch = str(info.physics.pitch)
+    heading = math.degrees(round(float(str(info.physics.heading)[:5]), 2))
+    pitch = str(info.physics.pitch)[:5]
     roll = str(info.physics.roll)
 
     ac.setText(l_kmph, speed)
     ac.setText(l_rpm, RPM)
     ac.setText(l_gear, gear)
-    ac.setText(l_heading, heading)
+    ac.setText(l_heading, str(heading))
     ac.setText(l_pitch, pitch)
     ac.setText(l_roll, roll)
     
