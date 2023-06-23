@@ -1,13 +1,11 @@
 ﻿import ac, acsys
 
-
 import os
 import sys
-import math
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'DLLs'))
-
 from sim_info import info
 
+import math
 
 #TODO: fix the usage of globals
 #TODO: fullscreen
@@ -15,6 +13,8 @@ from sim_info import info
 
 
 appName = "z3Dgauge"
+
+
 width, height = 1920, 1080
 
 
@@ -52,6 +52,7 @@ def acMain(ac_version): #app window init; global variables for later updating go
     global l_heading
     global l_pitch
     global l_roll
+    global l_debug
     global acceleration
     global ascii_RPM
     l_kmph = ac.addLabel(appWindow, "KMPH")
@@ -60,6 +61,7 @@ def acMain(ac_version): #app window init; global variables for later updating go
     l_heading = ac.addLabel(appWindow, "Heading")
     l_pitch = ac.addLabel(appWindow, "Pitch")
     l_roll = ac.addLabel(appWindow, "Roll")
+    l_debug = ac.addLabel(appWindow, "Debug value: ")
 
     ascii_RPM = ac.addLabel(appWindow, "")
     acceleration = ac.addLabel(appWindow, "")
@@ -79,32 +81,86 @@ def acMain(ac_version): #app window init; global variables for later updating go
 
     return appName
 
+
+
+
+
 def appGL(deltaT):
     
     
     ## Main
-    global gX, gY, gZ, gXleft, gZback
-    
-    # drawing the gauge's background primitive aka a square
-    # initial values
-    x0 = 20.0   # point 1
-    y0 = 20.0
-    x1 = 20.0   # point 2
-    y1 = 500.0 #500
-    x2 = 500.0   # point 3
-    y2 = 500.0
-    x3 = 500.0 #500  point 4
-    y3 = 20.0  # so I'm gonna have to find a way to make these variables be affected by gforces
+    global gX, gY, gZ, gXleft, gZback 
 
-    # calculated values with gforces into account
-    x00 = x0 - (abs(gZ)*100)    # forward
-    y00 = y0 - (abs(gXleft)*100)    #right
-    x11 = x1 - (abs(gZback)*100)    #reverse
-    y11 = y1 + (abs(gXleft)*100)    #right
-    x22 = x2 + (abs(gZback)*100)    #reverse
-    y22 = y2 + (abs(gX)*100)    #left
-    x33 = x3 + (abs(gZ)*100)    #forward
-    y33 = y3 - (abs(gX)*100)    #left
+    # Test square
+    coord_multiplier = 100
+    coord_array = (20, 20, 20, 500, 500, 500, 500, 20)
+    modifier_input = 0
+    color_rgba = (50, 0, 0, 0.5)
+    draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+    # gas, brake, clutch
+    coord_multiplier = 10
+
+    ## coord_array = (x0, y0, x1, y1, x2, y2, x3, y3)
+    # [point 1 ], [point 2] , [point 3] , [point 4]
+    # x0 , y0   , x1, y1    , x2, y2    , x3, y3
+    # for pedals:
+    # ------> x+
+    # | .//. point 2 and 3
+    # | ////
+    # | ////
+    # | .//. point 1 and 4
+    # y+
+
+
+    # gas
+    coord_array = (700, 700, 700, 700, 710, 700, 710, 700)
+    color_rgba = (0, 50, 0, 0.3)
+    modifier_input = pedal_gas
+    draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+    # brake
+    coord_array = (730, 700, 730, 700, 740, 700, 740, 700)
+    color_rgba = (50, 0, 0, 0.3)
+    modifier_input = pedal_brake
+    draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+    # clutch
+    coord_array = (760, 700, 760, 700, 770, 700, 770, 700)
+    color_rgba = (0, 0, 50, 0.3)
+    modifier_input = pedal_clutch
+    draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+
+    # RPM
+    # with input current RPM
+    #return ("l" * int(anotherRPM/200))
+    num_rpm_blocks = int(iRPM/200)
+    static_increase = 20
+    distance_increaser = 10
+    segment_increaser = 20
+    
+    rpm_segment_x = 100.0
+    rpm_segment_y = 700.0
+    rpm_segment_y_static = 700.0
+    for segment in range(num_rpm_blocks):
+        coord_array = (rpm_segment_x + distance_increaser, rpm_segment_y_static, 
+        rpm_segment_x + distance_increaser, rpm_segment_y - segment_increaser,
+        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y - segment_increaser,
+        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y_static)
+        color_rgba = (0, 25, 25, 0.3)
+        color_rgba_maxed = (0, 25, 25, 0.5)
+        
+        modifier_input = 0
+        if iRPM < (maxRPM - 1000):
+            draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+        else:
+            draw_line(coord_array, 0, 100, modifier_input, color_rgba_maxed, coord_multiplier)
+            
+        distance_increaser+=10
+        rpm_segment_x += 10
+        rpm_segment_y -= 10
+
 
 
     ## Heading (Top center)
@@ -123,40 +179,26 @@ def appGL(deltaT):
         heading_x = heading_x + 240
         ac.glEnd()
 
-    ## Roll
-
-    ## Pitch (Right center)
-
-    ## Speed (Left center)
-
-    ## 3D combination of Heading, Roll, Pitch
-
-    
-
-    ac.glBegin(acsys.GL.Quads)
-    ac.glColor4f(50,0,0,0.5)
-
-    ac.glVertex2f(x00, y00) # top left
-    ac.glVertex2f(x11, y11) # bottom left
-    ac.glVertex2f(x22, y22) # bottom right
-    ac.glVertex2f(x33, y33) # top right
-    ac.glEnd()
 
     
 
 def acUpdate(deltaT):
 
+    ac.setTitle(appWindow, "")
+    ac.setIconPosition(appWindow, 0, -10000)
     ac.setBackgroundOpacity(appWindow, 0)
     ac.drawBorder(appWindow, 0)
     global l_kmph
     global l_rpm
     global l_gear
     global l_heading
+    global l_debug
     global speed
-    global RPM
+    global RPM, maxRPM, iRPM
     global gear
     global acceleration
     global heading
+    global pedal_gas, pedal_brake, pedal_clutch
 
     # standard info
     speed = str(ac.getCarState(0, acsys.CS.SpeedKMH))
@@ -168,6 +210,12 @@ def acUpdate(deltaT):
     pitch = str(info.physics.pitch)[:5]
     roll = str(info.physics.roll)
 
+    # pedals info
+    # slicing 0.00
+    pedal_gas = str(info.physics.gas)[:4]
+    pedal_brake = str(info.physics.brake)[:4]
+    pedal_clutch = str(info.physics.clutch)[:4]
+
     ac.setText(l_kmph, speed)
     ac.setText(l_rpm, RPM)
     ac.setText(l_gear, gear)
@@ -175,6 +223,7 @@ def acUpdate(deltaT):
     ac.setText(l_pitch, pitch)
     ac.setText(l_roll, roll)
     
+    ac.setText(l_debug, str(pedal_gas))
 
     global ascii_RPM, ARPM
 
@@ -212,7 +261,48 @@ def acUpdate(deltaT):
     #print(acceleration)
 
 
-def tacho(anotherRPM):      #idk wtf is going on anymore; thanks to based serb for the function though
-    # l = [image] * int(anotherRPM/200))
-
+def tacho(anotherRPM):      # thanks to based serb for the function
     return ("l" * int(anotherRPM/200))
+
+
+# coord_array is a list of x0, y0, x1 and so on
+# color_rgb is a list for RGBA values
+def draw_line(coord_array, min_val, max_val, modifier_input, color_rgba, coord_multiplier):
+
+    # Initial values
+    x0 = coord_array[0]
+    y0 = coord_array[1]
+    x1 = coord_array[2]
+    y1 = coord_array[3]
+    x2 = coord_array[4]
+    y2 = coord_array[5]
+    x3 = coord_array[6]
+    y3 = coord_array[7]
+
+    y1 = int(y1) - (float(modifier_input) * 700)
+    y2 = int(y2) - (float(modifier_input) * 700)
+
+    # 3D Transformation
+    x00 = x0 - (abs(gZ) * coord_multiplier)    # forward
+    y00 = y0 - (abs(gXleft) * coord_multiplier)    #right
+    x11 = x1 - (abs(gZback) * coord_multiplier)    #reverse
+    y11 = y1 + (abs(gXleft) * coord_multiplier)    #right
+    x22 = x2 + (abs(gZback) * coord_multiplier)    #reverse
+    y22 = y2 + (abs(gX) * coord_multiplier)    #left
+    x33 = x3 + (abs(gZ) * coord_multiplier)    #forward
+    y33 = y3 - (abs(gX) * coord_multiplier)    #left
+
+    # Color unpack
+    color_R = color_rgba[0]
+    color_G = color_rgba[1]
+    color_B = color_rgba[2]
+    color_A = color_rgba[3]
+
+    ac.glBegin(acsys.GL.Quads)
+    ac.glColor4f(color_R, color_G, color_B, color_A)
+
+    ac.glVertex2f(x00, y00) # top left
+    ac.glVertex2f(x11, y11) # bottom left
+    ac.glVertex2f(x22, y22) # bottom right
+    ac.glVertex2f(x33, y33) # top right
+    ac.glEnd()
