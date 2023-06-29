@@ -140,7 +140,7 @@ def appGL(deltaT):
     distance_increaser = 10
     segment_increaser = 20
     
-    rpm_segment_x = 100.0
+    rpm_segment_x = -400.0
     rpm_segment_y = 700.0
     rpm_segment_y_static = 700.0
     for segment in range(num_rpm_blocks):
@@ -148,8 +148,8 @@ def appGL(deltaT):
         rpm_segment_x + distance_increaser, rpm_segment_y - segment_increaser,
         rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y - segment_increaser,
         rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y_static)
-        color_rgba = (0, 25, 25, 0.3)
-        color_rgba_maxed = (0, 25, 25, 0.5)
+        color_rgba = (25, 25, 25, 0.1)
+        color_rgba_maxed = (25, 25, 25, 0.2)
         
         modifier_input = 0
         if iRPM < (maxRPM - 1000):
@@ -157,7 +157,7 @@ def appGL(deltaT):
         else:
             draw_line(coord_array, 0, 100, modifier_input, color_rgba_maxed, coord_multiplier)
             
-        distance_increaser+=10
+        distance_increaser+=20
         rpm_segment_x += 10
         rpm_segment_y -= 10
 
@@ -212,9 +212,16 @@ def acUpdate(deltaT):
 
     # pedals info
     # slicing 0.00
-    pedal_gas = str(info.physics.gas)[:4]
-    pedal_brake = str(info.physics.brake)[:4]
-    pedal_clutch = str(info.physics.clutch)[:4]
+    # If live, get val from physics;
+    # else if replay, get val from player state
+    if info.graphics.status == 2:
+        pedal_gas = str(info.physics.gas)[:4]
+        pedal_brake = str(info.physics.brake)[:4]
+        pedal_clutch = str(info.physics.clutch)[:4]
+    elif info.graphics.status == 1:
+        pedal_gas = str(ac.getCarState(0, acsys.CS.Gas))[:4]
+        pedal_brake = str(ac.getCarState(0, acsys.CS.Brake))[:4]
+        pedal_clutch = str(ac.getCarState(0, acsys.CS.Clutch))[:4]
 
     ac.setText(l_kmph, speed)
     ac.setText(l_rpm, RPM)
@@ -265,6 +272,8 @@ def tacho(anotherRPM):      # thanks to based serb for the function
     return ("l" * int(anotherRPM/200))
 
 
+#TODO: replace glVertex with ac.glQuad
+
 # coord_array is a list of x0, y0, x1 and so on
 # color_rgb is a list for RGBA values
 def draw_line(coord_array, min_val, max_val, modifier_input, color_rgba, coord_multiplier):
@@ -306,3 +315,23 @@ def draw_line(coord_array, min_val, max_val, modifier_input, color_rgba, coord_m
     ac.glVertex2f(x22, y22) # bottom right
     ac.glVertex2f(x33, y33) # top right
     ac.glEnd()
+
+
+# TODO: move to a separate file
+# seven digit display
+def sd_display():
+
+    # Defining all segments
+    #   A
+    #F      B
+    #   G
+    #E      C
+    #   D
+    # currently these look like rectangles
+    def line_A(initial_x, initial_y):
+        ac.glBegin(acsys.GL.Quads)
+        ac.glVertex2f(initial_x, initial_y) # top left
+        ac.glVertex2f(initial_x, initial_y - 2) # bottom left
+        ac.glVertex2f(initial_x + 6, initial_y - 2) # bottom right
+        ac.glVertex2f(initial_x + 6, initial_y) # top right
+        ac.glEnd()
