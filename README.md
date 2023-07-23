@@ -1,5 +1,5 @@
 # z3dGauge
-A faux-3D HUD for the Assetto Corsa racing simulator. Uses car physics telemetry to "3D" transform gauges in sync with the gforces experiences by the car.  
+A polygon-drawn HUD for the Assetto Corsa racing simulator. Uses car physics telemetry to "3D" transform gauges in sync with the gforces experiences by the car.  
 Written as an in-game app and in Python (with use of PyOpenGL).  <br />  
 Requires sym_info.py to be loaded beforehand.
 
