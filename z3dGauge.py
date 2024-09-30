@@ -87,31 +87,30 @@ def acMain(ac_version): #app window init; global variables for later updating go
 
 def appGL(deltaT):
     
-    
     ## Main
     global gX, gY, gZ, gXleft, gZback 
 
-    # Test square
+    center_x = width / 2
+    center_y = height / 2
+    
+    # Square inner
     coord_multiplier = 100
-    coord_array = (20, 20, 20, 500, 500, 500, 500, 20)
+    coord_array = (center_x + 20, center_y + 20, center_x + 20, center_y + 500, center_x + 500, center_y + 500, center_x + 500, center_y + 20)
     modifier_input = 0
-    color_rgba = (50, 0, 0, 0.5)
+    color_rgba = (0, 20, 50, 0.3)
     draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+    # Square outer
+    coord_multiplier = 100
+    coord_array = (center_x , center_y , center_x , center_y + 520, center_x + 520, center_y + 520, center_x + 520, center_y )
+    modifier_input = 0
+    color_rgba = (0, 15, 50, 0.1)
+    draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
+
+
 
     # gas, brake, clutch
     coord_multiplier = 10
-
-    ## coord_array = (x0, y0, x1, y1, x2, y2, x3, y3)
-    # [point 1 ], [point 2] , [point 3] , [point 4]
-    # x0 , y0   , x1, y1    , x2, y2    , x3, y3
-    # for pedals:
-    # ------> x+
-    # | .//. point 2 and 3
-    # | ////
-    # | ////
-    # | .//. point 1 and 4
-    # y+
-
 
     # gas
     coord_array = (700, 700, 700, 700, 710, 700, 710, 700)
@@ -132,24 +131,30 @@ def appGL(deltaT):
     draw_line(coord_array, 0, 100, modifier_input, color_rgba, coord_multiplier)
 
 
+    coord_multiplier = 10
     # RPM
     # with input current RPM
-    #return ("l" * int(anotherRPM/200))
     num_rpm_blocks = int(iRPM/200)
     static_increase = 20
-    distance_increaser = 10
-    segment_increaser = 20
+    distance_increaser = 1
+    segment_increaser = 10
     
-    rpm_segment_x = -400.0
-    rpm_segment_y = 700.0
-    rpm_segment_y_static = 700.0
+    rpm_segment_x = center_x
+    rpm_segment_y = center_y + 480
+    rpm_segment_y_static = center_y + 480
     for segment in range(num_rpm_blocks):
-        coord_array = (rpm_segment_x + distance_increaser, rpm_segment_y_static, 
-        rpm_segment_x + distance_increaser, rpm_segment_y - segment_increaser,
-        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y - segment_increaser,
-        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y_static)
+        #coord_array = (rpm_segment_x + distance_increaser, rpm_segment_y_static, 
+        #rpm_segment_x + distance_increaser, rpm_segment_y - segment_increaser,
+        #rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y - segment_increaser,
+        #rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y_static)
+
+        coord_array = (rpm_segment_x + distance_increaser, rpm_segment_y - segment_increaser,
+        rpm_segment_x + distance_increaser, rpm_segment_y_static, 
+        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y_static,
+        rpm_segment_x + segment_increaser + distance_increaser, rpm_segment_y - segment_increaser
+        )
         color_rgba = (25, 25, 25, 0.1)
-        color_rgba_maxed = (25, 25, 25, 0.2)
+        color_rgba_maxed = (50, 25, 25, 0.2)
         
         modifier_input = 0
         if iRPM < (maxRPM - 1000):
@@ -157,28 +162,34 @@ def appGL(deltaT):
         else:
             draw_line(coord_array, 0, 100, modifier_input, color_rgba_maxed, coord_multiplier)
             
-        distance_increaser+=20
-        rpm_segment_x += 10
+        distance_increaser+=5
+        rpm_segment_x += 8
         rpm_segment_y -= 10
 
 
 
-    ## Heading (Top center)
-    # 45 degree segments
-    #heading_x = 0 - 960 + (heading % 360 ) * 10
-    #TODO: proper conversions
-    heading_x = 0 - 1920 + heading * 10
-    heading_y = 0
-    for head_segment in range(32):
+    # Gauge segments
+    center_x2 = width / 2
+    center_y2 = height / 2 + 95
+
+    for head_segment in range(num_rpm_blocks):
         ac.glBegin(acsys.GL.Quads)
-        ac.glColor4f(0,50,0,0.9)
-        ac.glVertex2f(heading_x - 5 , heading_y) # top left
-        ac.glVertex2f(heading_x -5 , heading_y + 20)   # bottom left
-        ac.glVertex2f(heading_x + 5 , heading_y + 20) # bottom right
-        ac.glVertex2f(heading_x + 5 , heading_y)   #top right
-        heading_x = heading_x + 240
+        ac.glColor4f(0,50,50,0.3)
+        ac.glVertex2f(center_x2 - 20 , center_y2) # top left
+        ac.glVertex2f(center_x2 - 20 , center_y2 + 20)   # bottom left
+        ac.glVertex2f(center_x2 - 10, center_y2 + 10) # bottom right
+        ac.glVertex2f(center_x2 - 10, center_y2)   #top right
+        center_x2 = center_x2 + 13
         ac.glEnd()
 
+
+    # Gauge segments experimental
+    c_increase=0.08
+    for RPM_segment in range(int(maxRPM/200)):
+        ac.glColor4f(c_increase, 0.2, 0.5, 0.3)
+        ac.glQuad(center_x - 20 , center_y + 80 ,10 ,10)
+        center_x += 13
+        c_increase+=0.08
 
     
 
@@ -243,6 +254,7 @@ def acUpdate(deltaT):
         ARPM = ARPM + "[!]"
     
     ac.setText(ascii_RPM, ARPM)
+   
     
     accelerationS = str(ac.getCarState(0, acsys.CS.AccG)) # returns a tuple with x y z; so X is sideways, Y is up and down and Z forward reverse
     accelerationTest = ac.getCarState(0, acsys.CS.AccG) # this is the non-printing one I'm gonna work with
@@ -315,23 +327,3 @@ def draw_line(coord_array, min_val, max_val, modifier_input, color_rgba, coord_m
     ac.glVertex2f(x22, y22) # bottom right
     ac.glVertex2f(x33, y33) # top right
     ac.glEnd()
-
-
-# TODO: move to a separate file
-# seven digit display
-def sd_display():
-
-    # Defining all segments
-    #   A
-    #F      B
-    #   G
-    #E      C
-    #   D
-    # currently these look like rectangles
-    def line_A(initial_x, initial_y):
-        ac.glBegin(acsys.GL.Quads)
-        ac.glVertex2f(initial_x, initial_y) # top left
-        ac.glVertex2f(initial_x, initial_y - 2) # bottom left
-        ac.glVertex2f(initial_x + 6, initial_y - 2) # bottom right
-        ac.glVertex2f(initial_x + 6, initial_y) # top right
-        ac.glEnd()
