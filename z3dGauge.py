@@ -14,8 +14,8 @@ import math
 
 appName = "z3Dgauge"
 
-
-width, height = 1920, 1080
+#TODO: get screen size
+width, height = 2560, 1440
 
 
 appWindow = 0
