@@ -3,6 +3,11 @@ A polygon-drawn HUD for the Assetto Corsa racing simulator. Uses car physics tel
 Written as an in-game app and in Python (with use of PyOpenGL).  <br />  
 Requires sym_info.py to be loaded beforehand.
 
+
+[Preview Oct 06 2024]  <br />
+Experimenting with more primitives.
+![Preview](https://i.imgur.com/grweCWE.png)
+
 [Preview Jul 20 2023]  <br />
 Added pedals, bearing markers, segmented RPM gauge.
 ![Preview](https://i.imgur.com/J1zOWIl.png)
